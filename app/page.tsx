@@ -1,7 +1,11 @@
+import DashboardLayout from "@/components/ui/DashboardLayout";
+
 export default function Home() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <h1>Welcome</h1>
+    <main>
+      <DashboardLayout>
+        <div>Hello</div>
+      </DashboardLayout>
     </main>
   );
 }
