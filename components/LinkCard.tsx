@@ -52,7 +52,7 @@ export default function LinkCard() {
                     </Select>
                 </div>
                 <div>
-                    <label htmlFor="link" className={`text-xs mb-2 ${errors?.email ? "text-destructive" : ""}`}>
+                    <label htmlFor="link" className={`text-xs mb-2 ${errors?.link ? "text-destructive" : ""}`}>
                         Link
                     </label>
                     <div className='relative'>
@@ -65,12 +65,12 @@ export default function LinkCard() {
                             })}
                             type="text"
                             id="link"
-                            className={`w-full py-3 pl-10 pr-[105px] border ${errors?.email ? "border-destructive" : "border-neutral-300"} outline-none rounded-lg focus:shadow-purpleShadow focus:outline-[1px] focus:outline-offset-0 focus:outline-neutral-300`}
+                            className={`w-full py-3 pl-10 pr-[105px] border ${errors?.link ? "border-destructive" : "border-neutral-300"} outline-none rounded-lg focus:shadow-purpleShadow focus:outline-[1px] focus:outline-offset-0 focus:outline-neutral-300`}
                             placeholder='e.g. https://www.github.com/johnappleseed'
                         />
                         <FiLink className="absolute top-1/2 left-4 -translate-y-1/2" size={16} />
-                        {errors?.email && (
-                            <p className='absolute top-1/2 right-4 -translate-y-1/2 text-destructive text-xs'>{errors?.email.message as string}</p>
+                        {errors?.link && (
+                            <p className='absolute top-1/2 right-4 -translate-y-1/2 text-destructive text-xs'>{errors?.link.message as string}</p>
                         )}
                     </div>
                 </div>

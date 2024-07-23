@@ -13,9 +13,9 @@ export default function Profile() {
     return (
         <DashboardLayout>
             <div className='w-full'>
-                <div className='w-full flex flex-col gap-6 p-5 sm:p-10 max-h-[150vh] overflow-y-scroll scrollbar-hide'>
+                <div className='w-full flex flex-col gap-6 px-5 py-6 sm:p-10 max-h-[150vh] overflow-y-scroll scrollbar-hide'>
                     <div className='mb-10'>
-                        <h2 className='text-[32px] text-primary font-bold'>Profile Details</h2>
+                        <h2 className='text-2xl sm:text-[32px] text-primary font-bold'>Profile Details</h2>
                         <p>Add your details to create a personal touch to your profile.</p>
                     </div>
                     <div className='bg-lightGray p-5 rounded-xl w-full'>
