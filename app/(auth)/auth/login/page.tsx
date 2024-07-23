@@ -64,7 +64,7 @@ export default function Login() {
                     <div>
                         <Button type="submit" disabled={!isValid}>Login</Button>
                     </div>
-                    <p className='text-gray-500 text-center'>Don’t have an account? <Link href={"/create-account"} className='text-secondary hover:text-secondary/80'>Create account</Link></p>
+                    <p className='text-gray-500 text-center'>Don’t have an account? <Link href={"/auth/create-account"} className='text-secondary hover:text-secondary/80'>Create account</Link></p>
                 </div>
             </form>
         </AuthLayout>
