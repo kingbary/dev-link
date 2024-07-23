@@ -10,6 +10,12 @@ First, clone the repository:
 git clone https://github.com/kingbary/dev-link.git
 ```
 
+Install dependencies:
+
+```bash
+pnpm install
+```
+
 Run the development server:
 
 ```bash
