@@ -1,22 +1,32 @@
 "use client";
 import AuthLayout from '@/components/ui/AuthLayout'
 import { Button } from '@/components/ui/button'
+import { createAccount } from '@/utils/actions/create-account';
 import Image from 'next/image'
 import Link from 'next/link'
-import React from 'react'
+import React, { useEffect, useTransition } from 'react'
 import { FieldValues, useForm } from 'react-hook-form'
+import { ClipLoader } from 'react-spinners';
 
 export default function CreateAccount() {
-    const { register, handleSubmit, formState: { errors, isValid }, watch } = useForm<FieldValues>({ mode: "all" })
-    const onSubmit = (data: FieldValues) => {
-        console.log(data)
-    }
+    const { register, formState: { errors, isValid }, watch } = useForm<FieldValues>({ mode: "all" })
+    let [isPending, startTransition] = useTransition();
+
+    useEffect(() => {
+        if (isPending) return;
+    }, [isPending]);
 
     const password = watch("password");
 
+    const onSubmit = async (data: FormData) => {
+        startTransition(() => {
+            createAccount(data);
+        });
+    }
+
     return (
         <AuthLayout>
-            <form onSubmit={handleSubmit(onSubmit)}>
+            <form action={onSubmit} method='POST'>
                 <div>
                     <h1 className='text-[32px] font-bold'>Create account</h1>
                     <p className='text-gray-500 mt-1'>Let’s get you started sharing your links!</p>
@@ -92,7 +102,7 @@ export default function CreateAccount() {
                         </div>
                     </div>
                     <div>
-                        <Button type="submit" disabled={!isValid}>Create new account</Button>
+                        <Button type="submit" disabled={!isValid || isPending}>{isPending ? (<ClipLoader color='white' size={18} />) : " Create new account"}</Button>
                     </div>
                     <p className='text-gray-500 text-center'>Already have an account? <Link href={"/auth/login"} className='text-secondary hover:text-secondary/80'>Login</Link></p>
                 </div>
