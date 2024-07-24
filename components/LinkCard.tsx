@@ -1,29 +1,34 @@
 "use client";
-import Image from 'next/image'
-import React from 'react'
-import { FieldValues, useForm } from 'react-hook-form'
+import React from 'react';
+import { FieldValues, useForm } from 'react-hook-form';
 import { FiLink } from 'react-icons/fi';
-import { RiEqualFill } from 'react-icons/ri'
+import { RiEqualFill } from 'react-icons/ri';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { TbBrandGithubFilled } from 'react-icons/tb';
 
-export default function LinkCard() {
-    const { register, formState: { errors, isValid } } = useForm<FieldValues>({ mode: "all" })
+interface LinkCardProps {
+    index: number;
+    onRemove: (index: number) => void;
+}
+
+export default function LinkCard({ index, onRemove }: LinkCardProps) {
+    const { register, formState: { errors, isValid } } = useForm<FieldValues>({ mode: "all" });
     const onSubmit = (data: FieldValues) => {
-        console.log(data)
-    }
+        console.log(data);
+    };
+
     return (
         <div className='bg-lightGray flex flex-col gap-3 p-5 rounded-xl'>
             <div className='flex justify-between'>
                 <div className='flex items-center gap-2'>
                     <RiEqualFill size={20} />
-                    <p className='font-bold'>Link #{"1"}</p>
+                    <p className='font-bold'>Link #{index + 1}</p>
                 </div>
-                <button className='text-primary'>Remove</button>
+                <button onClick={() => onRemove(index)} className='text-primary hover:opacity-80'>Remove</button>
             </div>
             <div>
                 <div className='mb-3'>
-                    <label htmlFor="email" className={`text-xs mb-2`}>
+                    <label htmlFor="platform" className={`text-xs mb-2`}>
                         Platform
                     </label>
                     <Select>
@@ -76,5 +81,5 @@ export default function LinkCard() {
                 </div>
             </div>
         </div>
-    )
+    );
 }
