@@ -4,9 +4,9 @@ import Link from 'next/link'
 import React, { ReactNode } from 'react'
 import { CgProfile } from 'react-icons/cg'
 import { FiLink } from 'react-icons/fi'
-import { Button } from './button'
+import { Button } from './ui/button'
 import { usePathname } from 'next/navigation'
-import { Skeleton } from './skeleton'
+import { Skeleton } from './ui/skeleton'
 import { MdOutlineRemoveRedEye } from 'react-icons/md'
 
 interface DashboardLayoutProps {

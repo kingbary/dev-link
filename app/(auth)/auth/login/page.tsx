@@ -1,5 +1,5 @@
 "use client";
-import AuthLayout from '@/components/ui/AuthLayout'
+import AuthLayout from '@/components/AuthLayout'
 import { Button } from '@/components/ui/button'
 import Image from 'next/image'
 import Link from 'next/link'

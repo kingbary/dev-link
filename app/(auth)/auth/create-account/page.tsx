@@ -1,12 +1,14 @@
 "use client";
-import AuthLayout from '@/components/ui/AuthLayout'
+import AuthLayout from '@/components/AuthLayout'
 import { Button } from '@/components/ui/button'
 import { createAccount } from '@/utils/actions/create-account';
 import Image from 'next/image'
 import Link from 'next/link'
+import { redirect, useRouter } from 'next/navigation';
 import React, { useEffect, useTransition } from 'react'
 import { FieldValues, useForm } from 'react-hook-form'
 import { ClipLoader } from 'react-spinners';
+import { toast } from 'sonner';
 
 export default function CreateAccount() {
     const { register, formState: { errors, isValid }, watch } = useForm<FieldValues>({ mode: "all" })
@@ -16,13 +18,21 @@ export default function CreateAccount() {
         if (isPending) return;
     }, [isPending]);
 
+    const router = useRouter()
+
     const password = watch("password");
 
     const onSubmit = async (data: FormData) => {
-        startTransition(() => {
-            createAccount(data);
+        startTransition(async () => {
+            const result = await createAccount(data);
+            if (result?.success) {
+                toast.success(result?.message);
+                router.push("/auth/login")
+            } else {
+                toast.error("Error creating account, try using a different email address");
+            }
         });
-    }
+    };
 
     return (
         <AuthLayout>
