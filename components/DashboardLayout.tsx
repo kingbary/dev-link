@@ -1,13 +1,16 @@
 "use client"
 import Image from 'next/image'
 import Link from 'next/link'
-import React, { ReactNode } from 'react'
+import React, { ReactNode, useEffect } from 'react'
 import { CgProfile } from 'react-icons/cg'
 import { FiLink } from 'react-icons/fi'
 import { Button } from './ui/button'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { Skeleton } from './ui/skeleton'
 import { MdOutlineRemoveRedEye } from 'react-icons/md'
+import { BeatLoader } from 'react-spinners'
+import { toast } from 'sonner'
+import { useSession } from 'next-auth/react'
 
 interface DashboardLayoutProps {
     children: ReactNode
@@ -17,6 +20,28 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     const pathname = usePathname();
     function isActive(path: string) {
         return pathname === path;
+    }
+    const session = useSession();
+    const router = useRouter();
+
+    useEffect(() => {
+        if (session.status === "loading") return;
+        if (session.status === "unauthenticated") {
+            router.push("/auth/login");
+        }
+    }, [session, router]);
+
+    if (session.status === "loading") {
+        return (
+            <div className="w-screen h-screen bg-[#FAFAFA] flex justify-center items-center">
+                <BeatLoader color="#633CFF" size={20} />
+            </div>
+        );
+    }
+
+    if (session.status === "unauthenticated") {
+        toast.error("You're not authorized!");
+        return null;
     }
 
     return (

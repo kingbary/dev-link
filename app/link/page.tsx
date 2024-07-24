@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button'
-import DashboardLayout from '@/components/ui/DashboardLayout'
+import DashboardLayout from '@/components/DashboardLayout'
 import LinkCard from '@/components/LinkCard'
 import React from 'react'
 import Image from 'next/image'

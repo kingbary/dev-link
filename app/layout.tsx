@@ -3,6 +3,7 @@ import { Instrument_Sans } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "sonner";
 import { FiLink } from "react-icons/fi";
+import SessionProviderWrapper from "@/providers/SessionProviderWrapper";
 
 const instrumentSans = Instrument_Sans({ weight: ["400", "500", "600", "700"], subsets: ["latin", "latin-ext"] });
 
@@ -22,7 +23,11 @@ export default function RootLayout({
         <link rel="shortcut icon" href="/favicon.png" type="image/x-icon" />
         <link rel="shortcut icon" href="/favicon.png" type="image/x-icon" />
       </head>
-      <body className={`${instrumentSans.className} ${instrumentSans.className}`}>{children}</body>
+      <body className={`${instrumentSans.className} ${instrumentSans.className}`}>
+        <SessionProviderWrapper>
+          {children}
+        </SessionProviderWrapper>
+      </body>
       <Toaster position="bottom-center" toastOptions={{
         unstyled: true,
         classNames: {

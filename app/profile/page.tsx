@@ -1,6 +1,6 @@
 "use client";
 import { Button } from '@/components/ui/button'
-import DashboardLayout from '@/components/ui/DashboardLayout'
+import DashboardLayout from '@/components/DashboardLayout'
 import Image from 'next/image'
 import React from 'react'
 import { FieldValues, useForm } from 'react-hook-form'

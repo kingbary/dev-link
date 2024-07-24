@@ -1,20 +1,46 @@
 "use client";
 import AuthLayout from '@/components/AuthLayout'
 import { Button } from '@/components/ui/button'
+import { signIn } from 'next-auth/react';
 import Image from 'next/image'
 import Link from 'next/link'
-import React from 'react'
+import { useRouter } from 'next/navigation';
+import React, { useEffect, useTransition } from 'react'
 import { FieldValues, useForm } from 'react-hook-form'
+import { ClipLoader } from 'react-spinners';
+import { toast } from 'sonner';
 
 export default function Login() {
-    const { register, handleSubmit, formState: { errors, isValid } } = useForm<FieldValues>({ mode: "all" })
-    const onSubmit = (data: FieldValues) => {
-        console.log(data)
-    }
+    const [isPending, startTransition] = useTransition();
+
+    useEffect(() => {
+        if (isPending) return;
+    }, [isPending]);
+
+    const router = useRouter();
+
+    const { register, handleSubmit, formState: { errors } } = useForm<FieldValues>({ mode: "all" });
+
+    const onSubmit = async (data: FieldValues) => {
+        startTransition(async () => {
+            const result = await signIn("credentials", {
+                redirect: false,
+                email: data.email,
+                password: data.password,
+            });
+
+            if (result?.error) {
+                toast.error(result.error);
+            } else {
+                toast.success("Login successful");
+                router.push("/");
+            }
+        });
+    };
 
     return (
         <AuthLayout>
-            <form onSubmit={handleSubmit(onSubmit)}>
+            <form onSubmit={handleSubmit(onSubmit)} method='POST'>
                 <div>
                     <h1 className='text-[32px] font-bold'>Login</h1>
                     <p className='text-gray-500 mt-1'>Add your details below to get back into the app</p>
@@ -62,7 +88,7 @@ export default function Login() {
                         </div>
                     </div>
                     <div>
-                        <Button type="submit" disabled={!isValid}>Login</Button>
+                        <Button type="submit" disabled={isPending}>{isPending ? (<ClipLoader color='white' size={18} />) : "Login"}</Button>
                     </div>
                     <p className='text-gray-500 text-center'>Don’t have an account? <Link href={"/auth/create-account"} className='text-secondary hover:text-secondary/80'>Create account</Link></p>
                 </div>

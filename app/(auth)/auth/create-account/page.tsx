@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { createAccount } from '@/utils/actions/create-account';
 import Image from 'next/image'
 import Link from 'next/link'
-import { redirect, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import React, { useEffect, useTransition } from 'react'
 import { FieldValues, useForm } from 'react-hook-form'
 import { ClipLoader } from 'react-spinners';
@@ -12,7 +12,7 @@ import { toast } from 'sonner';
 
 export default function CreateAccount() {
     const { register, formState: { errors, isValid }, watch } = useForm<FieldValues>({ mode: "all" })
-    let [isPending, startTransition] = useTransition();
+    const [isPending, startTransition] = useTransition();
 
     useEffect(() => {
         if (isPending) return;
