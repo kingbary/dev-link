@@ -11,6 +11,7 @@ import { MdOutlineRemoveRedEye } from 'react-icons/md'
 import { BeatLoader } from 'react-spinners'
 import { toast } from 'sonner'
 import { useSession } from 'next-auth/react'
+import PhonePreview from './PhonePreview'
 
 interface DashboardLayoutProps {
     children: ReactNode
@@ -22,6 +23,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         return pathname === path;
     }
     const session = useSession();
+    const id = session.data?.user.id
     const router = useRouter();
 
     useEffect(() => {
@@ -61,33 +63,15 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                         <p className='hidden sm:block'>Profile Details</p>
                     </Link>
                 </div>
-                <Button variant={'outline'} className='w-fit  sm:max-w-[114px]'>
+                <Link href={`/link-preview/${id}`} className='inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-semibold border border-secondary bg-white hover:bg-lightPurple text-secondary min-h-[46px] px-4 py-2'>
                     <span className='hidden sm:block'>Preview</span>
                     <MdOutlineRemoveRedEye size={20} className='sm:hidden' />
-                </Button>
+                </Link>
             </div>
             <div className='flex gap-6 my-6 max-h-[771px]'>
                 <div className='hidden lg:flex w-[45%]'>
                     <div className='bg-white flex justify-center items-center rounded-xl py-20 w-full'>
-                        <div className='max-h-[631px]'>
-                            <div className='bg-[url(/assets/icons/phone-outside-frame.svg)] bg-center flex items-center justify-center w-[307px] h-[631px]'>
-                                <div className='bg-[url(/assets/icons/phone-inner-frame.svg)] bg-center flex justify-center w-[285px] h-[611px] px-[23px] pt-[53px]'>
-                                    <div className='flex flex-col items-center w-full'>
-                                        <Skeleton className="size-24 rounded-full mb-[25px]" />
-                                        <Skeleton className="w-[160px] h-4 rounded-full mb-[13px]" />
-                                        <Skeleton className="w-[72px] h-2 rounded-full mb-[56px]" />
-                                        <div className='w-full flex flex-col gap-5'>
-                                            <Skeleton className="w-full h-11 rounded-lg" />
-                                            <Skeleton className="w-full h-11 rounded-lg" />
-                                            <Skeleton className="w-full h-11 rounded-lg" />
-                                            <Skeleton className="w-full h-11 rounded-lg" />
-                                            <Skeleton className="w-full h-11 rounded-lg" />
-                                        </div>
-
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        <PhonePreview />
                     </div>
                 </div>
                 <div className='bg-white w-[55%] flex flex-grow rounded-xl'>
