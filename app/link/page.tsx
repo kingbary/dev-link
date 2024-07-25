@@ -9,7 +9,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { createLink } from '@/utils/actions/create-links';
 import { toast } from 'sonner';
-import { ClipLoader } from 'react-spinners';
+import { BeatLoader, ClipLoader } from 'react-spinners';
 
 interface LinkData {
     platform: string;
@@ -128,7 +128,9 @@ const LinkContent = () => {
 };
 
 const LinkPage = () => (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<div className="w-screen h-screen bg-[#FAFAFA] flex justify-center items-center">
+        <BeatLoader color="#633CFF" size={20} />
+    </div>}>
         <LinkContent />
     </Suspense>
 );
