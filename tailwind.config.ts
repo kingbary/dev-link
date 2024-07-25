@@ -76,6 +76,7 @@ const config = {
       },
       boxShadow: {
         purpleShadow: "0px 0px 32px 0px rgba(99, 60, 255, 0.25)",
+        redShadow: "0px 0px 32px 0px rgba(255, 60, 60, 0.25)",
         grayShadow: "0px 0px 32px 0px rgba(0, 0, 0, 0.10)",
       },
     },

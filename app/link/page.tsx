@@ -1,26 +1,42 @@
 "use client";
+
 import { Button } from '@/components/ui/button';
 import DashboardLayout from '@/components/DashboardLayout';
 import LinkCard from '@/components/LinkCard';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useTransition } from 'react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useSession } from 'next-auth/react';
+import { createLink } from '@/utils/actions/create-links';
+import { toast } from 'sonner';
+import { ClipLoader } from 'react-spinners';
+
+interface LinkData {
+    platform: string;
+    link: string;
+}
 
 export default function Link() {
+    const [isPending, startTransition] = useTransition();
+
+    useEffect(() => {
+        if (isPending) return;
+    }, [isPending]);
+
     const router = useRouter();
     const searchParams = useSearchParams();
-
-    const [linkCards, setLinkCards] = useState<number[]>([]);
+    const { data: session } = useSession();
+    const [linkCards, setLinkCards] = useState<LinkData[]>([]);
 
     useEffect(() => {
         const linkCount = Number(searchParams.get("link_count")) || 0;
-        setLinkCards(Array.from({ length: linkCount }, (_, i) => i));
+        setLinkCards(Array.from({ length: linkCount }, () => ({ platform: '', link: '' })));
     }, [searchParams]);
 
     const handleAddLink = () => {
         setLinkCards(prev => {
             if (prev.length >= 5) return prev;
-            const newLinkCards = [...prev, prev.length];
+            const newLinkCards = [...prev, { platform: '', link: '' }];
             const linkCount = newLinkCards.length;
             const newURL = new URL(window.location.href);
             newURL.searchParams.set('add_link', 'true');
@@ -42,6 +58,34 @@ export default function Link() {
         });
     };
 
+    const handleSaveLinks = async () => {
+        if (!session || !session.user || !session.user.id) return;
+        const uid = session.user.id;
+        const links = linkCards.map(card => ({
+            uid,
+            platform: card.platform,
+            url: card.link,
+            createdAt: new Date(),
+        }));
+        startTransition(async () => {
+            const result = await createLink(uid, links);
+            if (result.success) {
+                toast.success("Links saved successfully");
+            } else {
+                console.error("Error saving links:", result.message);
+                toast.error("Error saving links");
+            }
+        })
+    };
+
+    const handleChange = (index: number, field: keyof LinkData, value: string) => {
+        setLinkCards(prev => {
+            const newLinkCards = [...prev];
+            newLinkCards[index][field] = value;
+            return newLinkCards;
+        });
+    };
+
     return (
         <DashboardLayout>
             <div className='w-full'>
@@ -55,8 +99,15 @@ export default function Link() {
                     </Button>
                     {linkCards.length > 0 ? (
                         <div className='pb-10 flex flex-col gap-6'>
-                            {linkCards.map((_, index) => (
-                                <LinkCard key={index} index={index} onRemove={handleRemoveLink} />
+                            {linkCards.map((linkCard, index) => (
+                                <LinkCard
+                                    key={index}
+                                    index={index}
+                                    platform={linkCard.platform}
+                                    link={linkCard.link}
+                                    onRemove={handleRemoveLink}
+                                    onChange={handleChange}
+                                />
                             ))}
                         </div>
                     ) : (
@@ -71,7 +122,7 @@ export default function Link() {
                 </div>
                 <div className='border-t border-[#D9D9D9] px-10 py-6'>
                     <div className='flex justify-end'>
-                        <Button className='max-w-[91px]'>Save</Button>
+                        <Button className='max-w-[91px]' onClick={handleSaveLinks}>{isPending ? (<ClipLoader color='white' size={18} />) : ("Save")}</Button>
                     </div>
                 </div>
             </div>

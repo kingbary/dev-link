@@ -33,7 +33,7 @@ export default function Login() {
                 toast.error(result.error);
             } else {
                 toast.success("Login successful");
-                router.push("/");
+                router.push("/link");
             }
         });
     };
@@ -60,7 +60,7 @@ export default function Login() {
                                 })}
                                 type="email"
                                 id="email"
-                                className={`w-full py-3 pl-10 pr-[105px] border ${errors?.email ? "border-destructive" : "border-neutral-300"} outline-none rounded-lg focus:shadow-purpleShadow focus:outline-[1px] focus:outline-offset-0 focus:outline-neutral-300`}
+                                className={`w-full py-3 pl-10 pr-[105px] border ${errors?.email ? "border-destructive focus:shadow-redShadow" : "border-neutral-300 focus:shadow-purpleShadow"} outline-none rounded-lg focus:outline-[1px] focus:outline-offset-0 focus:outline-neutral-300`}
                                 placeholder='e.g. alex@email.com'
                             />
                             <Image src={"/assets/icons/envelope.svg"} className="absolute top-1/2 left-4 -translate-y-1/2" width={16} height={16} alt='' />

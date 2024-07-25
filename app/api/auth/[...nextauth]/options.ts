@@ -1,8 +1,22 @@
 import CredentialsProvider from "next-auth/providers/credentials";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/config/firebase";
-import type { NextAuthOptions } from "next-auth";
+import type { DefaultSession, NextAuthOptions } from "next-auth";
 import type { JWT } from "next-auth/jwt";
+
+interface CustomSession extends DefaultSession {
+  user: {
+    id: string;
+    email: string;
+    token: string;
+  } & DefaultSession["user"];
+}
+
+interface CustomUser {
+  id: string;
+  email: string;
+  token: string;
+}
 
 interface CustomJWT extends JWT {
   id?: string;
@@ -20,7 +34,7 @@ export const options: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials || !credentials.email || !credentials.password) {
-          return null; // Ensure credentials are not undefined
+          return null;
         }
 
         const { email, password } = credentials;
@@ -37,7 +51,7 @@ export const options: NextAuthOptions = {
             const token = await user.getIdToken();
             return {
               id: user.uid,
-              email: user.email || "", // Ensure email is not null
+              email: user.email || "",
               token,
             };
           } else {
@@ -60,9 +74,9 @@ export const options: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.id = (user as any).id;
-        token.email = (user as any).email || "";
-        token.token = (user as any).token || "";
+        token.id = (user as CustomUser).id;
+        token.email = (user as CustomUser).email || "";
+        token.token = (user as CustomUser).token || "";
       }
       return token as CustomJWT;
     },
@@ -72,7 +86,7 @@ export const options: NextAuthOptions = {
         email: token.email || "",
         token: token.token || "",
       } as any;
-      return session;
+      return session as CustomSession;
     },
   },
 };

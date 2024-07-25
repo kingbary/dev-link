@@ -66,7 +66,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                     <MdOutlineRemoveRedEye size={20} className='sm:hidden' />
                 </Button>
             </div>
-            <div className='flex gap-6 my-6'>
+            <div className='flex gap-6 my-6 max-h-[771px]'>
                 <div className='hidden lg:flex w-[45%]'>
                     <div className='bg-white flex justify-center items-center rounded-xl py-20 w-full'>
                         <div className='max-h-[631px]'>
