@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/button';
 import DashboardLayout from '@/components/DashboardLayout';
 import LinkCard from '@/components/LinkCard';
-import React, { useEffect, useState, useTransition } from 'react';
+import React, { useEffect, useState, Suspense, useTransition } from 'react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
@@ -16,13 +16,8 @@ interface LinkData {
     link: string;
 }
 
-export default function Link() {
+const LinkContent = () => {
     const [isPending, startTransition] = useTransition();
-
-    useEffect(() => {
-        if (isPending) return;
-    }, [isPending]);
-
     const router = useRouter();
     const searchParams = useSearchParams();
     const { data: session } = useSession();
@@ -75,7 +70,7 @@ export default function Link() {
                 console.error("Error saving links:", result.message);
                 toast.error("Error saving links");
             }
-        })
+        });
     };
 
     const handleChange = (index: number, field: keyof LinkData, value: string) => {
@@ -122,10 +117,20 @@ export default function Link() {
                 </div>
                 <div className='border-t border-[#D9D9D9] px-10 py-6'>
                     <div className='flex justify-end'>
-                        <Button className='max-w-[91px]' onClick={handleSaveLinks}>{isPending ? (<ClipLoader color='white' size={18} />) : ("Save")}</Button>
+                        <Button className='max-w-[91px]' onClick={handleSaveLinks}>
+                            {isPending ? (<ClipLoader color='white' size={18} />) : ("Save")}
+                        </Button>
                     </div>
                 </div>
             </div>
         </DashboardLayout>
     );
-}
+};
+
+const LinkPage = () => (
+    <Suspense fallback={<div>Loading...</div>}>
+        <LinkContent />
+    </Suspense>
+);
+
+export default LinkPage;
