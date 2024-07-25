@@ -1,20 +1,46 @@
 "use client";
-import AuthLayout from '@/components/ui/AuthLayout'
+import AuthLayout from '@/components/AuthLayout'
 import { Button } from '@/components/ui/button'
+import { signIn } from 'next-auth/react';
 import Image from 'next/image'
 import Link from 'next/link'
-import React from 'react'
+import { useRouter } from 'next/navigation';
+import React, { useEffect, useTransition } from 'react'
 import { FieldValues, useForm } from 'react-hook-form'
+import { ClipLoader } from 'react-spinners';
+import { toast } from 'sonner';
 
 export default function Login() {
-    const { register, handleSubmit, formState: { errors } } = useForm<FieldValues>({ mode: "all" })
-    const onSubmit = (data: FieldValues) => {
-        console.log(data)
-    }
+    const [isPending, startTransition] = useTransition();
+
+    useEffect(() => {
+        if (isPending) return;
+    }, [isPending]);
+
+    const router = useRouter();
+
+    const { register, handleSubmit, formState: { errors } } = useForm<FieldValues>({ mode: "all" });
+
+    const onSubmit = async (data: FieldValues) => {
+        startTransition(async () => {
+            const result = await signIn("credentials", {
+                redirect: false,
+                email: data.email,
+                password: data.password,
+            });
+
+            if (result?.error) {
+                toast.error(result.error);
+            } else {
+                toast.success("Login successful");
+                router.push("/link");
+            }
+        });
+    };
 
     return (
         <AuthLayout>
-            <form onSubmit={handleSubmit(onSubmit)}>
+            <form onSubmit={handleSubmit(onSubmit)} method='POST'>
                 <div>
                     <h1 className='text-[32px] font-bold'>Login</h1>
                     <p className='text-gray-500 mt-1'>Add your details below to get back into the app</p>
@@ -34,7 +60,7 @@ export default function Login() {
                                 })}
                                 type="email"
                                 id="email"
-                                className={`w-full py-3 pl-10 pr-[105px] border ${errors?.email ? "border-destructive" : "border-neutral-300"} outline-none rounded-lg focus:outline-[1px] focus:outline-offset-0 focus:outline-neutral-300`}
+                                className={`w-full py-3 pl-10 pr-[105px] border ${errors?.email ? "border-destructive focus:shadow-redShadow" : "border-neutral-300 focus:shadow-purpleShadow"} outline-none rounded-lg focus:outline-[1px] focus:outline-offset-0 focus:outline-neutral-300`}
                                 placeholder='e.g. alex@email.com'
                             />
                             <Image src={"/assets/icons/envelope.svg"} className="absolute top-1/2 left-4 -translate-y-1/2" width={16} height={16} alt='' />
@@ -52,7 +78,7 @@ export default function Login() {
                                 {...register("password", { required: "Can't be empty" })}
                                 type="password"
                                 id="password"
-                                className={`w-full py-3 px-10 pr-[105px] border ${errors?.password ? "border-destructive" : "border-neutral-300"} outline-none rounded-lg focus:outline-[1px] focus:outline-offset-0 focus:outline-neutral-300`}
+                                className={`w-full py-3 px-10 pr-[105px] border ${errors?.password ? "border-destructive" : "border-neutral-300"} outline-none rounded-lg focus:shadow-purpleShadow focus:outline-[1px] focus:outline-offset-0 focus:outline-neutral-300`}
                                 placeholder='Enter your password'
                             />
                             <Image src={"/assets/icons/lock.svg"} className="absolute top-1/2 left-4 -translate-y-1/2" width={16} height={16} alt='' />
@@ -62,9 +88,9 @@ export default function Login() {
                         </div>
                     </div>
                     <div>
-                        <Button type="submit">Login</Button>
+                        <Button type="submit" disabled={isPending}>{isPending ? (<ClipLoader color='white' size={18} />) : "Login"}</Button>
                     </div>
-                    <p className='text-gray-500 text-center'>Don’t have an account? <Link href={"/create-account"} className='text-secondary hover:text-secondary/80'>Create account</Link></p>
+                    <p className='text-gray-500 text-center'>Don’t have an account? <Link href={"/auth/create-account"} className='text-secondary hover:text-secondary/80'>Create account</Link></p>
                 </div>
             </form>
         </AuthLayout>
