@@ -1,11 +1,10 @@
 import React, { Suspense } from 'react';
-import { Skeleton } from './ui/skeleton';
 import { fetchLinks } from '@/utils/query/get-link-data';
 import { useSession } from 'next-auth/react';
-import { FaArrowRight, FaCircle } from 'react-icons/fa6';
+import { FaArrowRight } from 'react-icons/fa6';
 import Link from 'next/link';
 import { socialsObject } from '@/utils/data/data';
-import SocialsCardLink from './SocialsCardLink';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default async function PhonePreview() {
     const { data } = useSession();
@@ -38,9 +37,16 @@ export default async function PhonePreview() {
                                 <div className='w-full flex flex-col gap-5'>
                                     {links.map((item, idx) => {
                                         const color = socialsObject[item.platform as keyof typeof socialsObject]?.color ?? '';
-                                        const Icon = socialsObject[item.platform as keyof typeof socialsObject]?.icon ?? FaCircle
                                         return (
-                                            <SocialsCardLink key={idx} bgColor={color} link={item.url} platformName={item.platform} PlatformIcon={Icon} />
+                                            <Link
+                                                key={idx}
+                                                href={item.url}
+                                                className='w-full flex items-center justify-between h-11 px-3 text-white rounded-lg hover:opacity-80'
+                                                style={{ backgroundColor: color }}
+                                            >
+                                                {item.platform}
+                                                <FaArrowRight size={16} color='white' />
+                                            </Link>
                                         );
                                     })}
                                 </div>
