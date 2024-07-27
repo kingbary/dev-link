@@ -2,20 +2,26 @@
 
 import { Button } from '@/components/ui/button';
 import DashboardLayout from '@/components/DashboardLayout';
-import React, { useState } from 'react';
+import React, { useEffect, useState, useTransition } from 'react';
 import { FieldValues, useForm } from 'react-hook-form';
 import axios from 'axios';
 import Image from 'next/image';
+import { useSession } from 'next-auth/react';
+import { toast } from 'sonner';
+import { ClipLoader } from 'react-spinners';
 
 export default function Profile() {
+    const session = useSession();
     const { register, handleSubmit, formState: { errors, isValid } } = useForm<FieldValues>({ mode: "all" });
     const [imageUrl, setImageUrl] = useState<string | null>(null);
     const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
+    const [imageError, setImageError] = useState(false);
 
     const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
             const formData = new FormData();
+            setImageError(false);
             formData.append('file', file);
             const previewUrl = URL.createObjectURL(file);
             setImagePreviewUrl(previewUrl);
@@ -31,16 +37,48 @@ export default function Profile() {
         }
     };
 
+    const [isPending, startTransition] = useTransition();
 
+    useEffect(() => {
+        if (isPending) return;
+    }, [isPending]);
 
-    const updateProfile = (data: FieldValues) => {
-        console.log({ ...data, imageUrl });
-        // Send data including imageUrl to your backend server
+    const onSubmit = (data: FieldValues) => {
+        startTransition(async () => {
+            if (!imageUrl) {
+                setImageError(true);
+                return;
+            }
+
+            const uid = session.data?.user.id;
+            const result = await fetch('/api/update-profile', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    uid,
+                    profileData: [{
+                        uid,
+                        imageUrl: imageUrl || '',
+                        firstName: data.firstName,
+                        lastName: data.lastName,
+                        email: data.email
+                    }]
+                }),
+            }).then(res => res.json());
+
+            if (result.success) {
+                toast.success(result.message);
+            } else {
+                toast.error(result.message);
+            }
+        });
     };
 
     return (
         <DashboardLayout>
-            <form className='w-full' action={updateProfile}>
+            <form className='w-full' onSubmit={handleSubmit(onSubmit)}>
                 <div className='w-full flex flex-col gap-6 px-5 py-6 sm:p-10 h-screen overflow-y-scroll scrollbar-hide'>
                     <div className='mb-10'>
                         <h2 className='text-2xl sm:text-[32px] text-primary font-bold'>Profile Details</h2>
@@ -63,7 +101,12 @@ export default function Profile() {
                                     <p className={`font-semibold ${imagePreviewUrl ? 'text-white' : 'text-secondary'}`}>+ Upload Image</p>
                                 </>
                             </div>
-                            <p className='text-xs px-4'>Image must be below 1024x1024px. Use PNG or JPG format.</p>
+                            <div>
+                                <p className='text-xs px-4'>Image must be below 1024x1024px. Use PNG or JPG format.</p>
+                                {imageError && (
+                                    <p className='text-xs px-4 text-destructive mt-2'>Select an image</p>
+                                )}
+                            </div>
                         </div>
                     </div>
                     <div className='bg-lightGray flex flex-col gap-3 p-5 rounded-xl w-full'>
@@ -126,7 +169,7 @@ export default function Profile() {
                 </div>
                 <div className='border-t border-[#D9D9D9] px-10 py-6'>
                     <div className='flex justify-end'>
-                        <Button className='max-w-[91px]' type="submit">Save</Button>
+                        <Button className='max-w-[91px]' type="submit" disabled={!isValid || isPending}>{isPending ? (<ClipLoader color='white' size={18} />) : "Save"}</Button>
                     </div>
                 </div>
             </form>
