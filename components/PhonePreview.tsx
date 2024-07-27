@@ -1,17 +1,30 @@
-import React, { Suspense } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { Skeleton } from './ui/skeleton';
 import { fetchLinks } from '@/utils/query/get-link-data';
 import { useSession } from 'next-auth/react';
-import { FaArrowRight, FaCircle } from 'react-icons/fa6';
-import Link from 'next/link';
+import { FaCircle } from 'react-icons/fa6';
 import { socialsObject } from '@/utils/data/data';
 import SocialsCardLink from './SocialsCardLink';
 
-export default async function PhonePreview() {
-    const { data } = useSession();
+type LinkData = {
+    platform: string;
+    url: string;
+};
 
-    const linksData = fetchLinks(data?.user.id ?? '');
-    const { links } = await linksData;
+export default function PhonePreview() {
+    const { data } = useSession();
+    const [links, setLinks] = useState<LinkData[]>([]);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            if (data?.user.id) {
+                const linksData = await fetchLinks(data.user.id);
+                setLinks(linksData?.links ?? []);
+            }
+        };
+
+        fetchData();
+    }, [data]);
 
     const skeleton = (
         <div className='w-full flex flex-col gap-5'>
@@ -31,14 +44,14 @@ export default async function PhonePreview() {
                         <Skeleton className="size-24 rounded-full mb-[25px]" />
                         <Skeleton className="w-[160px] h-4 rounded-full mb-[13px]" />
                         <Skeleton className="w-[72px] h-2 rounded-full mb-[56px]" />
-                        {!links?.length ? (
+                        {!links.length ? (
                             skeleton
                         ) : (
                             <Suspense fallback={skeleton}>
                                 <div className='w-full flex flex-col gap-5'>
                                     {links.map((item, idx) => {
                                         const color = socialsObject[item.platform as keyof typeof socialsObject]?.color ?? '';
-                                        const Icon = socialsObject[item.platform as keyof typeof socialsObject]?.icon ?? FaCircle
+                                        const Icon = socialsObject[item.platform as keyof typeof socialsObject]?.icon ?? FaCircle;
                                         return (
                                             <SocialsCardLink key={idx} bgColor={color} link={item.url} platformName={item.platform} PlatformIcon={Icon} />
                                         );
