@@ -83,8 +83,8 @@ const LinkContent = () => {
 
     return (
         <DashboardLayout>
-            <div className='w-full'>
-                <div className='w-full flex flex-col gap-6 px-5 py-6 sm:p-10 max-h-[100vh] overflow-y-scroll scrollbar-hide'>
+            <div className='relative w-full'>
+                <div className='w-full flex flex-col gap-6 px-5 py-6 sm:p-10 h-full overflow-y-scroll scrollbar-hide'>
                     <div className='mb-10'>
                         <h2 className='text-2xl sm:text-[32px] text-primary font-bold'>Customize your links</h2>
                         <p>Add/edit/remove links below and then share all your profiles with the world!</p>
@@ -115,7 +115,7 @@ const LinkContent = () => {
                         </div>
                     )}
                 </div>
-                <div className='border-t border-[#D9D9D9] px-10 py-6'>
+                <div className='absolute w-full bottom-0 right-0 border-t bg-white border-[#D9D9D9] rounded-b-xl px-10 py-6'>
                     <div className='flex justify-end'>
                         <Button className='max-w-[91px]' onClick={handleSaveLinks}>
                             {isPending ? (<ClipLoader color='white' size={18} />) : ("Save")}

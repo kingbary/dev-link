@@ -1,15 +1,15 @@
 import React, { Suspense } from 'react';
 import { fetchLinks } from '@/utils/query/get-link-data';
-import { useSession } from 'next-auth/react';
+import { getServerSession } from 'next-auth';
 import { FaArrowRight } from 'react-icons/fa6';
 import Link from 'next/link';
 import { socialsObject } from '@/utils/data/data';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default async function PhonePreview() {
-    const { data } = useSession();
+    const session = await getServerSession();
 
-    const linksData = fetchLinks(data?.user.id ?? '');
+    const linksData = fetchLinks(session?.user.id ?? '');
     const { links } = await linksData;
 
     const skeleton = (

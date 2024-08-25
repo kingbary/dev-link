@@ -78,8 +78,8 @@ export default function Profile() {
 
     return (
         <DashboardLayout>
-            <form className='w-full' onSubmit={handleSubmit(onSubmit)}>
-                <div className='w-full flex flex-col gap-6 px-5 py-6 sm:p-10 h-screen overflow-y-scroll scrollbar-hide'>
+            <form className='relative w-full' onSubmit={handleSubmit(onSubmit)}>
+                <div className='w-full flex flex-col gap-6 px-5 py-6 sm:p-10 h-full overflow-y-scroll scrollbar-hide'>
                     <div className='mb-10'>
                         <h2 className='text-2xl sm:text-[32px] text-primary font-bold'>Profile Details</h2>
                         <p>Add your details to create a personal touch to your profile.</p>
@@ -167,7 +167,7 @@ export default function Profile() {
                         </div>
                     </div>
                 </div>
-                <div className='border-t border-[#D9D9D9] px-10 py-6'>
+                <div className='absolute bottom-0 right-0 w-full border-t border-[#D9D9D9] px-10 py-6'>
                     <div className='flex justify-end'>
                         <Button className='max-w-[91px]' type="submit" disabled={!isValid || isPending}>{isPending ? (<ClipLoader color='white' size={18} />) : "Save"}</Button>
                     </div>
