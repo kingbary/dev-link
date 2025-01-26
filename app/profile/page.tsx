@@ -1,19 +1,85 @@
 "use client";
-import { Button } from '@/components/ui/button'
-import DashboardLayout from '@/components/DashboardLayout'
-import Image from 'next/image'
-import React from 'react'
-import { FieldValues, useForm } from 'react-hook-form'
+
+import { Button } from '@/components/ui/button';
+import DashboardLayout from '@/components/DashboardLayout';
+import React, { useEffect, useState, useTransition } from 'react';
+import { FieldValues, useForm } from 'react-hook-form';
+import axios from 'axios';
+import Image from 'next/image';
+import { useSession } from 'next-auth/react';
+import { toast } from 'sonner';
+import { ClipLoader } from 'react-spinners';
 
 export default function Profile() {
-    const { register, handleSubmit, formState: { errors, isValid } } = useForm<FieldValues>({ mode: "all" })
+    const session = useSession();
+    const { register, handleSubmit, formState: { errors, isValid } } = useForm<FieldValues>({ mode: "all" });
+    const [imageUrl, setImageUrl] = useState<string | null>(null);
+    const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
+    const [imageError, setImageError] = useState(false);
+
+    const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const formData = new FormData();
+            setImageError(false);
+            formData.append('file', file);
+            const previewUrl = URL.createObjectURL(file);
+            setImagePreviewUrl(previewUrl);
+
+            try {
+                const response = await axios.post('/api/upload-image', formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' },
+                });
+                setImageUrl(response.data.url);
+            } catch (error) {
+                console.error('Failed to upload image', error);
+            }
+        }
+    };
+
+    const [isPending, startTransition] = useTransition();
+
+    useEffect(() => {
+        if (isPending) return;
+    }, [isPending]);
+
     const onSubmit = (data: FieldValues) => {
-        console.log(data)
-    }
+        startTransition(async () => {
+            if (!imageUrl) {
+                setImageError(true);
+                return;
+            }
+
+            const uid = session.data?.user.id;
+            const result = await fetch('/api/update-profile', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    uid,
+                    profileData: [{
+                        uid,
+                        imageUrl: imageUrl || '',
+                        firstName: data.firstName,
+                        lastName: data.lastName,
+                        email: data.email
+                    }]
+                }),
+            }).then(res => res.json());
+
+            if (result.success) {
+                toast.success(result.message);
+            } else {
+                toast.error(result.message);
+            }
+        });
+    };
+
     return (
         <DashboardLayout>
-            <div className='w-full'>
-                <div className='w-full flex flex-col gap-6 px-5 py-6 sm:p-10 h-screen overflow-y-scroll scrollbar-hide'>
+            <form className='relative w-full' onSubmit={handleSubmit(onSubmit)}>
+                <div className='w-full flex flex-col gap-6 px-5 py-6 sm:p-10 h-full overflow-y-scroll scrollbar-hide'>
                     <div className='mb-10'>
                         <h2 className='text-2xl sm:text-[32px] text-primary font-bold'>Profile Details</h2>
                         <p>Add your details to create a personal touch to your profile.</p>
@@ -21,11 +87,26 @@ export default function Profile() {
                     <div className='bg-lightGray p-5 rounded-xl w-full'>
                         <div className='grid grid-cols-1 md:grid-cols-3 items-center gap-6'>
                             <p>Profile picture</p>
-                            <div className='bg-lightPurple flex flex-col items-center justify-center size-[193px] rounded-xl'>
-                                <Image src={"/assets/icons/upload-image-icon.svg"} width={40} height={40} alt='' />
-                                <p className='text-secondary font-semibold'>+ Upload Image</p>
+                            <div
+                                className='relative bg-lightPurple flex flex-col gap-1 items-center justify-center size-[193px] rounded-xl'
+                                style={{ backgroundImage: imagePreviewUrl ? `url(${imagePreviewUrl})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center', backgroundBlendMode: "darken" }}
+                            >
+                                <input
+                                    type='file'
+                                    className='absolute inset-0 w-full h-full opacity-0 cursor-pointer'
+                                    onChange={handleImageChange}
+                                />
+                                <>
+                                    <Image src={`${imagePreviewUrl ? '/assets/icons/upload-image-icon-white.svg' : '/assets/icons/upload-image-icon.svg'}`} width={40} height={40} alt='' />
+                                    <p className={`font-semibold ${imagePreviewUrl ? 'text-white' : 'text-secondary'}`}>+ Upload Image</p>
+                                </>
                             </div>
-                            <p className='text-xs px-4'>Image must be below 1024x1024px. Use PNG or JPG format.</p>
+                            <div>
+                                <p className='text-xs px-4'>Image must be below 1024x1024px. Use PNG or JPG format.</p>
+                                {imageError && (
+                                    <p className='text-xs px-4 text-destructive mt-2'>Select an image</p>
+                                )}
+                            </div>
                         </div>
                     </div>
                     <div className='bg-lightGray flex flex-col gap-3 p-5 rounded-xl w-full'>
@@ -57,7 +138,7 @@ export default function Profile() {
                                     {...register("lastName", {
                                         required: "Can't be empty",
                                     })}
-                                    type="email"
+                                    type="text"
                                     id="lastName"
                                     className={`w-full py-3 pl-4 pr-[105px] border ${errors?.lastName ? "border-destructive" : "border-neutral-300"} outline-none rounded-lg focus:shadow-purpleShadow focus:outline-[1px] focus:outline-offset-0 focus:outline-neutral-300`}
                                     placeholder='e.g. Appleseed'
@@ -86,12 +167,12 @@ export default function Profile() {
                         </div>
                     </div>
                 </div>
-                <div className='border-t border-[#D9D9D9] px-10 py-6'>
+                <div className='absolute bottom-0 right-0 w-full border-t border-[#D9D9D9] px-10 py-6'>
                     <div className='flex justify-end'>
-                        <Button className='max-w-[91px]'>Save</Button>
+                        <Button className='max-w-[91px]' type="submit" disabled={!isValid || isPending}>{isPending ? (<ClipLoader color='white' size={18} />) : "Save"}</Button>
                     </div>
                 </div>
-            </div>
+            </form>
         </DashboardLayout>
-    )
+    );
 }
