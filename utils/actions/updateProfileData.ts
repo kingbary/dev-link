@@ -1,8 +1,6 @@
-import { doc, setDoc, updateDoc, getDoc } from "firebase/firestore";
-import { db } from "@/config/firebase";
+import { prisma } from "@/lib/prisma";
 
 interface ProfileData {
-  uid: string;
   imageUrl: string;
   firstName: string;
   lastName: string;
@@ -10,32 +8,29 @@ interface ProfileData {
 }
 
 export const updateProfileData = async (
-  uid: string,
+  userId: string,
   profileData: ProfileData[]
 ) => {
   try {
-    if (!uid) {
+    if (!userId) {
       return { success: false, message: "No user ID provided" };
     }
 
-    const userDocRef = doc(db, "usersProfile", uid);
-
-    const docSnapshot = await getDoc(userDocRef);
-    if (!docSnapshot.exists()) {
-      await setDoc(userDocRef, {
+    // Upsert user profile (create if doesn't exist, update if exists)
+    await prisma.userProfile.upsert({
+      where: { userId },
+      create: {
+        userId,
         firstName: profileData[0].firstName,
         lastName: profileData[0].lastName,
-        email: profileData[0].email,
         photoURL: profileData[0].imageUrl,
-      });
-    } else {
-      await updateDoc(userDocRef, {
+      },
+      update: {
         firstName: profileData[0].firstName,
         lastName: profileData[0].lastName,
-        email: profileData[0].email,
         photoURL: profileData[0].imageUrl,
-      });
-    }
+      },
+    });
 
     return { success: true, message: "Profile updated successfully" };
   } catch (error) {

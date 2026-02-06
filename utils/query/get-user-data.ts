@@ -1,7 +1,6 @@
 "use server";
 
-import { db } from "@/config/firebase";
-import { doc, getDoc } from "firebase/firestore";
+import { prisma } from "@/lib/prisma";
 
 type ProfileData = {
   displayName: string;
@@ -9,23 +8,41 @@ type ProfileData = {
   photoURL?: string;
 };
 
-export const fetchProfileData = async (uid: string) => {
+export const fetchProfileData = async (userId: string) => {
   try {
-    const docRef = doc(db, "usersProfile", uid);
-    const docSnap = await getDoc(docRef);
+    let userProfile = await prisma.userProfile.findUnique({
+      where: { userId },
+      include: { user: true },
+    });
 
-    if (docSnap.exists()) {
-      const profileData: ProfileData = {
-        displayName: docSnap.data().displayName,
-        email: docSnap.data().email,
-        photoURL: docSnap.data().photoURL,
-      };
-      console.log(profileData);
+    // If no profile exists, create one
+    if (!userProfile) {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+      });
 
-      return { success: true, profileData };
-    } else {
-      return { success: false, message: "No such document!" };
+      if (!user) {
+        return { success: false, message: "User not found!" };
+      }
+
+      userProfile = await prisma.userProfile.create({
+        data: {
+          userId,
+          firstName: null,
+          lastName: null,
+          photoURL: null,
+        },
+        include: { user: true },
+      });
     }
+
+    const profileData: ProfileData = {
+      displayName: `${userProfile.firstName || ''} ${userProfile.lastName || ''}`.trim() || 'Anonymous',
+      email: userProfile.user.email,
+      photoURL: userProfile.photoURL || undefined,
+    };
+
+    return { success: true, profileData };
   } catch (error) {
     if (error instanceof Error) {
       return { success: false, message: error.message };

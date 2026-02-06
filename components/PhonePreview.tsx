@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Skeleton } from './ui/skeleton';
 import { fetchLinks } from '@/utils/query/get-link-data';
 import { useSession } from 'next-auth/react';
@@ -7,84 +7,167 @@ import { socialsObject } from '@/utils/data/data';
 import SocialsCardLink from './SocialsCardLink';
 import { fetchProfileData } from '@/utils/query/get-user-data';
 import Image from 'next/image';
+import { useProfileRefresh } from '@/providers/ProfileRefreshContext';
 
 type LinkData = {
     platform: string;
     url: string;
 };
+
 type ProfileData = {
     displayName: string;
     email: string;
     photoURL?: string;
-}
+};
 
 export default function PhonePreview() {
-    const { data: session } = useSession();
+    const { data: session, status } = useSession();
+    const { refreshKey } = useProfileRefresh();
     const [profileInfo, setProfileInfo] = useState<ProfileData | null>(null);
     const [links, setLinks] = useState<LinkData[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    const fetchData = useCallback(async () => {
+        if (!session?.user?.id) {
+            setIsLoading(false);
+            return;
+        }
+
+        console.log('📱 PhonePreview: Fetching data...');
+
+        try {
+            setIsLoading(true);
+            setError(null);
+
+            const [profileDataResponse, linksData] = await Promise.all([
+                fetchProfileData(session.user.id),
+                fetchLinks(session.user.id)
+            ]);
+
+            console.log('📱 PhonePreview: Received data:', {
+                profile: profileDataResponse.success,
+                linksCount: linksData?.links?.length || 0
+            });
+
+            if (profileDataResponse.success && profileDataResponse.profileData) {
+                setProfileInfo(profileDataResponse.profileData);
+            } else {
+                setError(profileDataResponse.message || 'Failed to load profile');
+            }
+
+            setLinks(linksData?.links ?? []);
+        } catch (err) {
+            setError('An unexpected error occurred');
+            console.error('Error fetching data:', err);
+        } finally {
+            setIsLoading(false);
+        }
+    }, [session?.user?.id]);
 
     useEffect(() => {
-        const fetchData = async () => {
-            if (session?.user?.id) {
-                const profileDataResponse = await fetchProfileData(session.user.id);
-                const linksData = await fetchLinks(session.user.id);
-
-                if (profileDataResponse.success && profileDataResponse.profileData) {
-                    setProfileInfo(profileDataResponse.profileData);
-                } else {
-                    console.error(profileDataResponse.message);
-                }
-
-                setLinks(linksData?.links ?? []);
-            }
-        };
-
-        fetchData();
-    }, [session]);
+        console.log('📱 PhonePreview: useEffect triggered, refreshKey:', refreshKey);
+        if (status === 'authenticated') {
+            fetchData();
+        }
+    }, [status, fetchData, refreshKey]);
 
     const skeleton = (
         <div className='w-full flex flex-col gap-5'>
-            <Skeleton className="w-full h-11 rounded-lg" />
-            <Skeleton className="w-full h-11 rounded-lg" />
-            <Skeleton className="w-full h-11 rounded-lg" />
-            <Skeleton className="w-full h-11 rounded-lg" />
-            <Skeleton className="w-full h-11 rounded-lg" />
+            {[...Array(5)].map((_, i) => (
+                <Skeleton key={i} className="w-full h-11 rounded-lg" />
+            ))}
         </div>
     );
 
+    const renderProfileSection = () => {
+        if (isLoading) {
+            return (
+                <>
+                    <Skeleton className="size-20 sm:size-24 rounded-full mb-4 sm:mb-6.25" />
+                    <Skeleton className="w-32 sm:w-40 h-3 sm:h-4 rounded-full mb-2 sm:mb-3.25" />
+                    <Skeleton className="w-28 sm:w-40 h-2 rounded-full mb-10 sm:mb-14" />
+                </>
+            );
+        }
+
+        if (error || !profileInfo) {
+            return (
+                <>
+                    <div className="size-20 sm:size-24 rounded-full bg-gray-200 mb-4 sm:mb-6.25 flex items-center justify-center">
+                        <span className="text-gray-400 text-xs sm:text-sm">No Image</span>
+                    </div>
+                    <p className="w-32 sm:w-40 h-3 sm:h-4 rounded-full mb-2 sm:mb-3.25 text-center text-gray-500 text-xs sm:text-sm">Anonymous</p>
+                    <p className="h-2 rounded-full mb-10 sm:mb-14 text-center text-xs text-gray-400">
+                        {session?.user?.email || 'No email'}
+                    </p>
+                </>
+            );
+        }
+
+        return (
+            <>
+                <div className="relative size-20 sm:size-24 mb-4 sm:mb-6.25">
+                    <Image
+                        src={profileInfo.photoURL || '/default-profile.png'}
+                        width={96}
+                        height={96}
+                        alt={`${profileInfo.displayName}'s profile`}
+                        className="size-20 sm:size-24 rounded-full object-cover"
+                        priority
+                    />
+                </div>
+                <p className="w-32 sm:w-40 rounded-full mb-2 sm:mb-3.25 text-center font-semibold text-xs sm:text-sm truncate px-2">
+                    {profileInfo.displayName || "Anonymous"}
+                </p>
+                <p className="mb-10 sm:mb-14 text-center text-xs text-gray-600 truncate px-2 max-w-full">
+                    {profileInfo.email}
+                </p>
+            </>
+        );
+    };
+
+    const renderLinksSection = () => {
+        if (isLoading) {
+            return skeleton;
+        }
+
+        if (!links.length) {
+            return (
+                <div className="w-full flex flex-col items-center justify-center gap-3 py-8">
+                    <p className="text-sm text-gray-400">No links added yet</p>
+                </div>
+            );
+        }
+
+        return (
+            <div className='w-full flex flex-col gap-5 overflow-y-auto max-h-75 scrollbar-hide'>
+                {links.map((item, idx) => {
+                    const platformData = socialsObject[item.platform as keyof typeof socialsObject];
+                    const color = platformData?.color ?? '#6B7280';
+                    const Icon = platformData?.icon ?? FaCircle;
+
+                    return (
+                        <SocialsCardLink
+                            key={`${item.platform}-${idx}`}
+                            bgColor={color}
+                            link={item.url}
+                            platformName={item.platform}
+                            PlatformIcon={Icon}
+                        />
+                    );
+                })}
+            </div>
+        );
+    };
+
     return (
-        <div className='max-h-[631px]'>
-            <div className='bg-[url(/assets/icons/phone-outside-frame.svg)] bg-center flex items-center justify-center w-[307px] h-[631px]'>
-                <div className='bg-[url(/assets/icons/phone-inner-frame.svg)] bg-center flex justify-center w-[285px] h-[611px] px-[23px] pt-[53px]'>
+        <div className='max-h-157.75'>
+            <div className='bg-[url(/assets/icons/phone-outside-frame.svg)] bg-center flex items-center justify-center w-76.75 h-157.75'>
+                <div className='bg-[url(/assets/icons/phone-inner-frame.svg)] bg-center flex justify-center w-71.25 h-152.75 px-5.75 pt-13.25'>
                     <div className='flex flex-col items-center w-full'>
-                        {profileInfo ? (
-                            <>
-                                <Image src={profileInfo.photoURL || '/default-profile.png'} width={96} height={96} alt="Profile" className="size-24 rounded-full mb-[25px]" />
-                                <p className="w-[160px] h-4 rounded-full mb-[13px] text-center">{profileInfo.displayName ? profileInfo.displayName : "profileName"}</p>
-                                <p className="h-2 rounded-full mb-[56px] text-center">{profileInfo.email}</p>
-                            </>
-                        ) : (
-                            <>
-                                <Skeleton className="size-24 rounded-full mb-[25px]" />
-                                <Skeleton className="w-[160px] h-4 rounded-full mb-[13px]" />
-                                <Skeleton className="w-[72px] h-2 rounded-full mb-[56px]" />
-                            </>
-                        )}
-                        {!links.length ? (
-                            skeleton
-                        ) : (
-                            <Suspense fallback={skeleton}>
-                                <div className='w-full flex flex-col gap-5'>
-                                    {links.map((item, idx) => {
-                                        const color = socialsObject[item.platform as keyof typeof socialsObject]?.color ?? '';
-                                        const Icon = socialsObject[item.platform as keyof typeof socialsObject]?.icon ?? FaCircle;
-                                        return (
-                                            <SocialsCardLink key={idx} bgColor={color} link={item.url} platformName={item.platform} PlatformIcon={Icon} />
-                                        );
-                                    })}
-                                </div>
-                            </Suspense>
-                        )}
+                        {renderProfileSection()}
+                        {renderLinksSection()}
                     </div>
                 </div>
             </div>

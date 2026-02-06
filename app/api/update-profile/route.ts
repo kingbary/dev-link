@@ -9,14 +9,14 @@ export async function POST(request: Request) {
   try {
     const data = await request.json();
 
-    if (!data.uid || !data.profileData || !Array.isArray(data.profileData)) {
+    if (!data.userId || !data.profileData || !Array.isArray(data.profileData)) {
       return NextResponse.json(
         { success: false, message: "Invalid request data" },
         { status: 400 }
       );
     }
 
-    const result = await updateProfileData(data.uid, data.profileData);
+    const result = await updateProfileData(data.userId, data.profileData);
     return NextResponse.json(result);
   } catch (error: unknown) {
     if (isError(error)) {

@@ -1,30 +1,41 @@
 "use server";
 
-import { db, auth } from "@/config/firebase";
-import { addDoc, collection } from "firebase/firestore";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { prisma } from "@/lib/prisma";
+import bcrypt from "bcryptjs";
 
 export const createAccount = async (formData: FormData) => {
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
 
   try {
-    const userCredential = await createUserWithEmailAndPassword(
-      auth,
-      email,
-      password
-    );
-    const user = userCredential.user;
+    // Check if user already exists
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
+    });
 
-    if (user) {
-      const collectionRef = collection(db, "users");
-      await addDoc(collectionRef, {
-        uid: user.uid,
-        email: user.email,
-        createdAt: new Date(),
-      });
-      return { success: true, message: "Account created successfully" };
+    if (existingUser) {
+      return { success: false, message: "User already exists" };
     }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create user with profile
+    const user = await prisma.user.create({
+      data: {
+        email,
+        password: hashedPassword,
+        profile: {
+          create: {
+            firstName: null,
+            lastName: null,
+            photoURL: null,
+          },
+        },
+      },
+    });
+
+    return { success: true, message: "Account created successfully" };
   } catch (error) {
     if (error instanceof Error) {
       return { success: false, message: error.message };

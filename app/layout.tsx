@@ -19,28 +19,24 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <head>
-        <link rel="shortcut icon" href="/favicon.png" type="image/x-icon" />
-        <link rel="shortcut icon" href="/favicon.png" type="image/x-icon" />
-      </head>
       <body className={`${instrumentSans.className} ${instrumentSans.className}`}>
         <SessionProviderWrapper>
           {children}
         </SessionProviderWrapper>
-      </body>
-      <Toaster position="bottom-center" toastOptions={{
-        unstyled: true,
-        classNames: {
-          error: 'bg-primary sm:min-w-[397px] flex items-center gap-1 text-red-400 text-sm font-semibold rounded-lg px-6 py-4 sm:-ml-5',
-          success: 'bg-primary sm:min-w-[397px] flex items-center justify-center gap-2 text-[#FAFAFA] font-semibold rounded-lg px-6 py-4 sm:-ml-5',
-          warning: 'text-yellow-400',
-          info: 'bg-blue-400',
-        },
-      }}
-        icons={{
-          success: <FiLink strokeWidth={2.2} color="#737373" size={20} />,
+        <Toaster position="bottom-center" toastOptions={{
+          unstyled: true,
+          classNames: {
+            error: 'bg-primary sm:min-w-[397px] flex items-center gap-1 text-red-400 text-sm font-semibold rounded-lg px-6 py-4 sm:-ml-5',
+            success: 'bg-primary sm:min-w-[397px] flex items-center justify-center gap-2 text-[#FAFAFA] font-semibold rounded-lg px-6 py-4 sm:-ml-5',
+            warning: 'text-yellow-400',
+            info: 'bg-blue-400',
+          },
         }}
-      />
+          icons={{
+            success: <FiLink strokeWidth={2.2} color="#737373" size={20} />,
+          }}
+        />
+      </body>
     </html>
   );
 }

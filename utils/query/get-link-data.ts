@@ -1,29 +1,20 @@
 "use server";
 
-import { db } from "@/config/firebase";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { prisma } from "@/lib/prisma";
 
 interface LinkData {
-  uid: string;
+  id: string;
+  userId: string;
   platform: string;
   url: string;
   createdAt: Date;
 }
 
-export const fetchLinks = async (uid: string) => {
+export const fetchLinks = async (userId: string) => {
   try {
-    const collectionRef = collection(db, "links");
-    const q = query(collectionRef, where("uid", "==", uid));
-    const querySnapshot = await getDocs(q);
-
-    const links: LinkData[] = [];
-    querySnapshot.forEach((doc) => {
-      links.push({
-        uid: doc.data().uid,
-        platform: doc.data().platform,
-        url: doc.data().url,
-        createdAt: doc.data().createdAt.toDate(),
-      });
+    const links = await prisma.link.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
     });
 
     return { success: true, links };

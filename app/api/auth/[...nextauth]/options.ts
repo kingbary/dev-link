@@ -1,6 +1,6 @@
 import CredentialsProvider from "next-auth/providers/credentials";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "@/config/firebase";
+import { prisma } from "@/lib/prisma";
+import bcrypt from "bcryptjs";
 import type { DefaultSession, NextAuthOptions } from "next-auth";
 import type { JWT } from "next-auth/jwt";
 
@@ -8,20 +8,17 @@ interface CustomSession extends DefaultSession {
   user: {
     id: string;
     email: string;
-    token: string;
   } & DefaultSession["user"];
 }
 
 interface CustomUser {
   id: string;
   email: string;
-  token: string;
 }
 
 interface CustomJWT extends JWT {
   id?: string;
   email?: string;
-  token?: string;
 }
 
 export const options: NextAuthOptions = {
@@ -40,24 +37,28 @@ export const options: NextAuthOptions = {
         const { email, password } = credentials;
 
         try {
-          const userCredential = await signInWithEmailAndPassword(
-            auth,
-            email,
-            password
-          );
-          const user = userCredential.user;
+          // Find user in database
+          const user = await prisma.user.findUnique({
+            where: { email },
+          });
 
-          if (user) {
-            const token = await user.getIdToken();
-            return {
-              id: user.uid,
-              email: user.email || "",
-              token,
-            };
-          } else {
-            console.error("Authorization failed: No user data");
+          if (!user) {
+            console.error("Authorization failed: User not found");
             return null;
           }
+
+          // Verify password
+          const isPasswordValid = await bcrypt.compare(password, user.password);
+
+          if (!isPasswordValid) {
+            console.error("Authorization failed: Invalid password");
+            return null;
+          }
+
+          return {
+            id: user.id,
+            email: user.email,
+          };
         } catch (error) {
           console.error("Error during authorization:", error);
           return null;
@@ -76,7 +77,6 @@ export const options: NextAuthOptions = {
       if (user) {
         token.id = (user as CustomUser).id;
         token.email = (user as CustomUser).email || "";
-        token.token = (user as CustomUser).token || "";
       }
       return token as CustomJWT;
     },
@@ -84,7 +84,6 @@ export const options: NextAuthOptions = {
       session.user = {
         id: token.id as string,
         email: token.email || "",
-        token: token.token || "",
       } as any;
       return session as CustomSession;
     },

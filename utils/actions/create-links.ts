@@ -1,29 +1,31 @@
 "use server";
 
-import { db } from "@/config/firebase";
-import { addDoc, collection, Firestore } from "firebase/firestore";
+import { prisma } from "@/lib/prisma";
 
 interface LinkData {
-  uid: string;
   platform: string;
   url: string;
-  createdAt: Date;
 }
 
-export const createLink = async (uid: string, links: LinkData[]) => {
+export const createLink = async (userId: string, links: LinkData[]) => {
   try {
-    const collectionRef = collection(db as unknown as Firestore, "links");
+    // Delete all existing links for this user first
+    await prisma.link.deleteMany({
+      where: { userId },
+    });
 
-    for (const link of links) {
-      await addDoc(collectionRef, {
-        uid,
-        platform: link.platform,
-        url: link.url,
-        createdAt: link.createdAt,
+    // Then create the new links
+    if (links.length > 0) {
+      await prisma.link.createMany({
+        data: links.map((link) => ({
+          userId,
+          platform: link.platform,
+          url: link.url,
+        })),
       });
     }
 
-    return { success: true, message: "Links created successfully" };
+    return { success: true, message: "Links saved successfully" };
   } catch (error) {
     if (error instanceof Error) {
       return { success: false, message: error.message };
